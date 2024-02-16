@@ -1,44 +1,50 @@
-package com.example.eCommerce.domain.member.service;
+package com.example.eCommerce.domain.member;
 
+import com.example.eCommerce.domain.member.controller.MemberController;
 import com.example.eCommerce.domain.member.dto.MemberCreateDto;
-import com.example.eCommerce.domain.member.repository.MemberRepository;
 import com.example.eCommerce.global.errors.exception.ApiResponseException;
 import com.example.eCommerce.global.response.ResCode;
+import com.google.gson.Gson;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.PropertyEditorRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.validation.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.beans.PropertyEditor;
-import java.lang.reflect.Array;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-public class MemberServiceTest {
-
-    @SpyBean
-    public MemberRepository memberRepository;
+@AutoConfigureMockMvc
+public class MemberControllerTest {
 
     @Autowired
-    public MemberService memberService;
+    private MemberController memberController;
+    @Autowired
+    private MockMvc mockMvc;
 
+    @Autowired
+    private Gson gson;
 
     @Transactional
     @DisplayName("회원가입 폼 검증")
     @ParameterizedTest
     @MethodSource("validForm")
-    public void validMember(String loginId, String password, String passwordConfirm, String name, String email, ResCode resCode){
+    public void signup_Created(String loginId, String password, String passwordConfirm, String name, String email, ResCode resCode) throws Exception {
 
         // given
         MemberCreateDto memberCreateDto = MemberCreateDto.builder()
@@ -50,14 +56,16 @@ public class MemberServiceTest {
                 .build();
 
         // when
-        ApiResponseException result = assertThrows(ApiResponseException.class, () -> {
-//            memberService.signupValidate(memberCreateDto,);
-        });
+        ResultActions resultActions = mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/v1/member/signUp")
+                        .content(gson.toJson(memberCreateDto))
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andDo(print());
 
-        // then
-        assertThat(result.getResData().getCode()).isEqualTo(resCode);
+        resultActions.andExpect(status().isBadRequest());
+
+
     }
-
     static Stream<Arguments> validForm() {
         return Stream.of(
                 Arguments.arguments("","1234","1234","홍길동","email@gmail.com", ResCode.F_01_01_01),
@@ -67,7 +75,5 @@ public class MemberServiceTest {
                 Arguments.arguments("user1","1234","12345","홍길동","email@gmail.com", ResCode.F_01_01_02)
         );
     }
-
-
 
 }

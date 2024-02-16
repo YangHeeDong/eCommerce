@@ -1,10 +1,13 @@
 package com.example.eCommerce.domain.member.dto;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
+@Builder
 public class MemberCreateDto {
 
     @NotEmpty(message = "아이디는 필수 입니다.")

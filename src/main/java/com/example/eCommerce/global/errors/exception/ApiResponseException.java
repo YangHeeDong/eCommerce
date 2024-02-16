@@ -9,6 +9,7 @@ public class ApiResponseException extends RuntimeException{
     private final ResData resData;
 
     public ApiResponseException(ResData resData){
+        super("response failed");
         this.resData = resData;
     }
 

@@ -9,6 +9,7 @@ import com.example.eCommerce.global.response.ResData;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.Errors;
 
@@ -17,25 +18,26 @@ import org.springframework.validation.Errors;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public ResData signUp (@Valid MemberCreateDto formData, Errors errors) {
+    public void signUp(@Valid MemberCreateDto formData, Errors errors) {
 
         this.signupValidate(formData,errors);
 
         Member signUp = Member.builder()
                 .loginId(formData.getLoginId())
-                .password(formData.getPassword())
+                .password(passwordEncoder.encode(formData.getPassword()))
+                .email(formData.getEmail())
                 .build();
 
-        return ResData.of(ResCode.S_00_01);
+        memberRepository.save(signUp);
     }
 
     void signupValidate(MemberCreateDto formData, Errors errors){
 
         if(errors.hasErrors()){
-            throw new ApiResponseException(ResData.of(ResCode.F_01_01_01,errors));
+            throw new ApiResponseException(ResData.of(ResCode.F_01_01_01,"11"));
         }
 
         if (!formData.getPassword().equals(formData.getPasswordConfirm())) {
@@ -52,7 +54,7 @@ public class MemberService {
 
         if (this.memberRepository.existsByLoginId(formData.getLoginId())) {
 
-            errors.rejectValue("username", "unique violation", "username unique violation");
+            errors.rejectValue("loginId", "unique violation", "loginId unique violation");
 
             throw new ApiResponseException(
                     ResData.of(
